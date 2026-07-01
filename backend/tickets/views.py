@@ -1,10 +1,12 @@
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from accounts.permissions import IsOwnerOrStaff
+from accounts.permissions import IsOwnerOrStaff, user_can_access_ticket
 from .models import Ticket, TicketAttachment, TicketComment
 from .serializers import (
     TicketAttachmentSerializer,
@@ -81,17 +83,29 @@ class TicketCommentViewSet(viewsets.ModelViewSet):
     serializer_class = TicketCommentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_ticket(self):
+        ticket = get_object_or_404(Ticket, pk=self.kwargs['ticket_pk'])
+        if not user_can_access_ticket(self.request.user, ticket):
+            raise PermissionDenied('You do not have access to this ticket.')
+        return ticket
+
     def get_queryset(self):
-        qs = TicketComment.objects.filter(ticket_id=self.kwargs['ticket_pk']).select_related('author')
+        ticket = self.get_ticket()
+        qs = TicketComment.objects.filter(ticket=ticket).select_related('author')
         user = self.request.user
         if not (user.is_admin or user.is_technician):
             qs = qs.exclude(is_internal_note=True)
         return qs
 
     def perform_create(self, serializer):
-        ticket = Ticket.objects.get(pk=self.kwargs['ticket_pk'])
-        comment = serializer.save(author=self.request.user, ticket=ticket)
-        if (self.request.user.is_admin or self.request.user.is_technician) and not ticket.first_response_at:
+        ticket = self.get_ticket()
+        is_staff = self.request.user.is_admin or self.request.user.is_technician
+        comment = serializer.save(
+            author=self.request.user,
+            ticket=ticket,
+            is_internal_note=serializer.validated_data.get('is_internal_note', False) and is_staff,
+        )
+        if is_staff and not ticket.first_response_at:
             ticket.first_response_at = timezone.now()
             ticket.save(update_fields=['first_response_at'])
         return comment
@@ -102,9 +116,14 @@ class TicketAttachmentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
+    def get_ticket(self):
+        ticket = get_object_or_404(Ticket, pk=self.kwargs['ticket_pk'])
+        if not user_can_access_ticket(self.request.user, ticket):
+            raise PermissionDenied('You do not have access to this ticket.')
+        return ticket
+
     def get_queryset(self):
-        return TicketAttachment.objects.filter(ticket_id=self.kwargs['ticket_pk'])
+        return TicketAttachment.objects.filter(ticket=self.get_ticket())
 
     def perform_create(self, serializer):
-        ticket = Ticket.objects.get(pk=self.kwargs['ticket_pk'])
-        serializer.save(uploaded_by=self.request.user, ticket=ticket)
+        serializer.save(uploaded_by=self.request.user, ticket=self.get_ticket())

@@ -1,7 +1,20 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+
+ALLOWED_ATTACHMENT_EXTENSIONS = [
+    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv',
+    'png', 'jpg', 'jpeg', 'gif', 'zip', 'log',
+]
+MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+def validate_attachment_size(file):
+    if file.size > MAX_ATTACHMENT_SIZE_BYTES:
+        raise ValidationError('File size must not exceed 10 MB.')
 
 
 class Ticket(models.Model):
@@ -88,7 +101,13 @@ class TicketComment(models.Model):
 
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='ticket_attachments/%Y/%m/')
+    file = models.FileField(
+        upload_to='ticket_attachments/%Y/%m/',
+        validators=[
+            FileExtensionValidator(allowed_extensions=ALLOWED_ATTACHMENT_EXTENSIONS),
+            validate_attachment_size,
+        ],
+    )
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
