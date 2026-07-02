@@ -17,13 +17,13 @@ def _client_ip(request):
 def send_login_event(request, username, success):
     """Best-effort notification to the SOC Dashboard demo webhook.
 
-    SAFETY: only ever fires for the designated test account
-    (SOC_WEBHOOK_TEST_USERNAME). Real end-user login data is never sent
-    anywhere by this function. Never raises — a webhook outage must not
+    SAFETY: only ever fires for accounts explicitly allowlisted in
+    SOC_WEBHOOK_MONITORED_USERNAMES (comma-separated). Accounts not on the
+    list are never sent anywhere. Never raises — a webhook outage must not
     block login.
     """
-    test_username = getattr(settings, 'SOC_WEBHOOK_TEST_USERNAME', '')
-    if not test_username or username != test_username:
+    monitored = getattr(settings, 'SOC_WEBHOOK_MONITORED_USERNAMES', set())
+    if not username or username not in monitored:
         return
 
     url = getattr(settings, 'SOC_WEBHOOK_URL', '')
@@ -38,7 +38,7 @@ def send_login_event(request, username, success):
         'username': username,
         'event_type': event_type,
         'host': 'helpdesk-ticketing',
-        'raw_message': f'{"Successful" if success else "Failed"} login attempt for test account "{username}"',
+        'raw_message': f'{"Successful" if success else "Failed"} login attempt for monitored account "{username}"',
     }
 
     try:
