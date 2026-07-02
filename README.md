@@ -1,26 +1,26 @@
 # Helpdesk Ticketing System
 
-Aplikasi helpdesk / IT support ticketing untuk portofolio. Dibangun dengan React (frontend), Django REST Framework (backend), dan PostgreSQL (database).
+A full-stack helpdesk / IT support ticketing app. Built with React (frontend), Django REST Framework (backend), and PostgreSQL (database).
 
-## Fitur
+## Features
 
-- Autentikasi JWT (register, login) dengan role: Admin, Technician, User
-- CRUD tiket dengan status (Open, In Progress, Resolved, Closed) dan prioritas (Low, Medium, High, Urgent)
-- Assign tiket ke teknisi
-- Dashboard dengan ringkasan statistik (chart status & prioritas)
-- SLA tracking (target respon & resolusi otomatis berdasarkan prioritas, deteksi breach)
-- Komentar pada tiket, termasuk catatan internal (khusus staff)
-- Upload lampiran file pada tiket
-- Knowledge base artikel troubleshooting
-- Notifikasi email otomatis saat tiket dibuat, status berubah, atau di-assign
+- JWT authentication (register, login) with roles: Admin, Technician, User
+- Ticket CRUD with status (Open, In Progress, Resolved, Closed) and priority (Low, Medium, High, Urgent)
+- Assign tickets to technicians
+- Dashboard with summary stats (status & priority charts)
+- SLA tracking (automatic response & resolution targets based on priority, breach detection)
+- Ticket comments, including internal notes (staff only)
+- File attachments on tickets
+- Knowledge base for troubleshooting articles
+- Automated email notifications on ticket creation, status changes, and assignment
 
 ## Tech Stack
 
 - **Frontend:** React (Vite), React Router, Axios, Recharts
 - **Backend:** Django, Django REST Framework, Simple JWT
-- **Database:** PostgreSQL (Supabase di production)
+- **Database:** PostgreSQL (Supabase in production)
 
-## Menjalankan Secara Lokal
+## Running Locally
 
 ### Backend
 
@@ -29,7 +29,7 @@ cd backend
 python -m venv venv
 ./venv/Scripts/activate  # Windows
 pip install -r requirements.txt
-cp .env.example .env     # sesuaikan isinya, atau set USE_SQLITE=True untuk quick start
+cp .env.example .env     # adjust as needed, or set USE_SQLITE=True for a quick start
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
