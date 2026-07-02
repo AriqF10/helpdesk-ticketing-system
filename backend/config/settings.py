@@ -176,6 +176,13 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
+# Optional: forwards login events for a single designated TEST account to an
+# external SOC Dashboard demo project. Never sends data for real users —
+# see accounts/soc_webhook.py. All three must be set for anything to be sent.
+SOC_WEBHOOK_URL = os.getenv('SOC_WEBHOOK_URL', '')
+SOC_WEBHOOK_SECRET = os.getenv('SOC_WEBHOOK_SECRET', '')
+SOC_WEBHOOK_TEST_USERNAME = os.getenv('SOC_WEBHOOK_TEST_USERNAME', '')
+
 
 # CORS
 
